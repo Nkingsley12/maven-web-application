@@ -10,12 +10,14 @@ node{
  stage('3CodeQuality'){
   sh "${mavenHome}/bin/mvn sonar:sonar"
  }
+ /*
  stage('4UploadArtifacts'){
   sh "${mavenHome}/bin/mvn deploy"
  }
+ */
   stage('5deploy_uat'){
     //sh "scp "
-    deploy adapters: [tomcat9(credentialsId: 'git-credentials3', path: '', url: 'http://ec2-3-83-30-28.compute-1.amazonaws.com:8080/manager/html:8080')], contextPath: null, war: 'target/*war'
+    deploy adapters: [tomcat9(credentialsId: 'git-credentials3', path: '', url: 'http://ec2-3-83-30-28:8080')], contextPath: null, war: 'target/*war'
   }
  stage('6Approval'){
     timeout(time:9, unit:'HOURS') {
@@ -23,7 +25,7 @@ node{
     }
  }
  stage('7deploy_prod'){
-    deploy adapters: [tomcat9(credentialsId: 'git-credentials3', path: '', url: 'http://ec2-3-83-30-28.compute-1.amazonaws.com:8080/manager/html:8080')], contextPath: null, war: 'target/*war'
+    deploy adapters: [tomcat9(credentialsId: 'git-credentials3', path: '', url: 'http://ec2-3-83-30-28:8080')], contextPath: null, war: 'target/*war'
  }
  stage('8Notification'){
     // Pipeline Syntax 
