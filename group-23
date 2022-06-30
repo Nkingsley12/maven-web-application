@@ -1,0 +1,27 @@
+node{
+    def mavenHome = tool name: 'maven3.8.4'
+    stage('1:cloning')
+    {git credentialsId: 'git-credentials3', url: 'https://github.com/Nkingsley12/maven-web-application' }
+    stage('2testing/build')
+    sh "${mavenHome}/bin/mvn install"
+    stage('4CodeQuality') {
+    sh "${mavenHome}/bin/mvn sonar:sonar"
+    }
+    //stage('5uploadArtifacts'){}
+    
+    stage('6deploy2uat')
+    {deploy adapters: [tomcat9(credentialsId: 'tomcat-jenkins2', path: '', url: 'http://54.211.106.167:8080/')], contextPath: null, war: 'target/*war'} 
+   stage('7approval')
+   {timeout(time:9, unit:'HOURS') {
+        input message: 'Application ready for deployment, Please review and approve'
+    }
+    }
+    stage('8deploy2prod')
+    {deploy adapters: [tomcat9(credentialsId: 'tomcat-jenkins2', path: '', url: 'http://54.211.106.167:8080/')], contextPath: null, war: 'target/*war'}
+    
+    stage('9notification')
+    {emailext body: '''group build
+
+
+    Class 28 group-23''', recipientProviders: [contributor(), developers(), buildUser()], subject: 'grp build', to: 'babila.kingsley@yahoo.fr'}
+    }
