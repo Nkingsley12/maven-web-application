@@ -1,0 +1,79 @@
+pipeline {
+    agent "any"
+    tools {
+        maven "maven3.8.7"
+    }
+    triggers{
+     pollSCM('* * * * *')
+    }
+    options{
+    timestamps()
+    buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '2', daysToKeepStr: '', numToKeepStr: '2'))
+   }
+   /* options {
+        
+    }
+    */
+    stages{
+        stage('stage1- cloning form scm'){
+            steps{
+                git "https://github.com/Nkingsley12/maven-web-application"
+            }
+        }
+        stage('steg2-code build and test'){
+            steps{
+                sh "echo code build using maven build system"
+                sh "mvn clean package"
+            }
+        }
+        /*stage('stage3- artifactory'){
+            steps{
+                sh "deploy to code artifactory nexus"
+                sh "mvn deploy"
+            }
+        }
+        */
+        stage('stage-4 approval gate'){
+            steps{
+                sh "echo 'approval require for deployment'"
+                timeout(time:8, unit: 'HOURS' ) {
+                   input message: 'Please verify and approve'
+                }
+            }
+        }
+        stage('dstage-4 deploy to container'){
+            steps{
+                deploy adapters: [tomcat9(credentialsId: 'tomcat-cred', path: '', url: 'http://44.201.73.233:8080/')], contextPath: null, war: 'target/*war'
+                sh "echo 'deploying to prod' "
+            }
+        }
+    }
+    post{
+        always{
+            emailext body: '''hello guys
+
+please check build status
+
+thank
+name/signature''', recipientProviders: [developers(), buildUser(), contributor()], subject: 'success', to: 'pipeline.team@gmail.com'
+        }
+        success{
+            emailext body: '''hello guys
+
+Good job, build job a success
+
+thank
+name/signature''', recipientProviders: [developers(), buildUser(), contributor()], subject: 'success', to: 'pipeline.team@gmail.com'
+        }
+        failure{
+            emailext body: '''hello guys
+
+build failed please resolve asap
+
+thank
+name/signature''', recipientProviders: [developers(), buildUser(), contributor()], subject: 'success', to: 'pipeline.team@gmail.com'
+        }
+            
+    
+    }
+}
